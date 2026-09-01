@@ -77,8 +77,6 @@ h1{
   margin:1rem 0 0;
 }
 
-.blurb{max-width:52ch; color:var(--soft); margin:1.8rem 0 0}
-
 /* ── index ──────────────────────────────────────────────── */
 .index-head{
   display:flex; align-items:baseline; gap:1rem;
@@ -86,14 +84,15 @@ h1{
   font-family:var(--mono); font-size:.72rem; letter-spacing:.16em;
   text-transform:uppercase; color:var(--faint);
 }
-.index-head .count{margin-left:auto}
 
-.index{list-style:none; margin:0; padding:0}
+.index{
+  list-style:none; margin:0;
+  padding:0 0 clamp(4rem,12vh,7rem);
+}
 
 .entry{border-bottom:1px solid var(--rule)}
 
-.entry a,
-.entry .stub{
+.entry a{
   display:grid;
   grid-template-columns:5.5rem 1fr;
   gap:0 1.5rem;
@@ -131,27 +130,6 @@ h1{
   font-size:.94rem; max-width:48ch;
 }
 
-.entry .stub{color:var(--faint)}
-.entry .stub .num{color:var(--faint)}
-.entry .stub .title{color:var(--faint)}
-
-.pending{
-  font-family:var(--mono); font-size:.68rem; letter-spacing:.14em;
-  text-transform:uppercase; color:var(--faint);
-  border:1px solid var(--rule); padding:.15rem .5rem;
-  margin-left:.75rem; vertical-align:.28em; white-space:nowrap;
-}
-
-/* ── footer ─────────────────────────────────────────────── */
-footer{
-  margin-top:clamp(3rem,8vh,5rem);
-  padding:1.5rem 0 clamp(3rem,8vh,5rem);
-  font-family:var(--mono); font-size:.72rem; letter-spacing:.08em;
-  color:var(--faint);
-}
-footer a{color:var(--blue); text-decoration:none; border-bottom:1px solid var(--rule)}
-footer a:hover{border-bottom-color:var(--blue)}
-
 @media (prefers-reduced-motion:reduce){
   *{transition:none !important}
 }
@@ -167,15 +145,10 @@ footer a:hover{border-bottom-color:var(--blue)}
     <p class="eyebrow">UC Berkeley · Fall 2026</p>
     <h1>CS 180</h1>
     <p class="byline">Jeffery Ren</p>
-    <p class="blurb">
-      Coursework for Intro to Computer Vision and Computational Photography.
-      Each project below is written up as its own drawing set.
-    </p>
   </header>
 
   <div class="index-head">
     <span>Index</span>
-    <span class="count">1 of 6 posted</span>
   </div>
 
   <ol class="index" id="index">
@@ -191,18 +164,7 @@ footer a:hover{border-bottom-color:var(--blue)}
       </a>
     </li>
 
-    <li class="entry">
-      <div class="stub">
-        <span class="num">Proj 1</span>
-        <h2 class="title">Colorizing the Prokudin-Gorskii Collection<span class="pending">Not yet posted</span></h2>
-      </div>
-    </li>
-
   </ol>
-
-  <footer>
-    Jeffery Ren · <a href="https://cal-cs180.github.io/fa26/">CS 180, Fall 2026</a>
-  </footer>
 
 </div>
 
