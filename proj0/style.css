@@ -1,0 +1,431 @@
+/* ══════════════════════════════════════════════════════════════
+   CS 180 · Project 0 — "Cyanotype Table"
+   A drafting-sheet treatment: blueline grid, registration marks,
+   and an orange dimension line on every plate stating where the
+   camera stood. Orange is reserved for measurement. Nothing else.
+   ══════════════════════════════════════════════════════════════ */
+
+:root {
+  --paper:   #EFF3F7;
+  --white:   #FFFFFF;
+  --ink:     #0C2340;
+  --soft:    #3F5670;
+  --faint:   #8497AC;
+  --blue:    #0E7FA8;
+  --blue-dim:#8FC5DC;
+  --rule:    #C6D5E2;
+  --ray:     #E8590C;
+
+  --grid: rgba(14, 127, 168, .055);
+  --grid-step: 24px;
+
+  --disp: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --body: "Inter Tight", ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "Space Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --maxw: 1180px;
+  --gut: clamp(1.15rem, 4vw, 3rem);
+  --sheet-gap: clamp(3.4rem, 8vw, 6rem);
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 5.5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: var(--grid-step) var(--grid-step);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: clamp(16.5px, 1.05vw, 18px);
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.skip {
+  position: absolute; left: -9999px; top: 0; z-index: 100;
+  background: var(--ink); color: var(--white);
+  padding: .7rem 1.1rem; font-family: var(--mono); font-size: .8rem;
+}
+.skip:focus { left: .5rem; top: .5rem; }
+
+:where(a, button, [tabindex]):focus-visible {
+  outline: 2px solid var(--ray);
+  outline-offset: 3px;
+}
+
+/* ── navigation ─────────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--paper) 90%, transparent);
+  backdrop-filter: saturate(1.4) blur(10px);
+  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  border-bottom: 1px solid var(--rule);
+}
+.nav-inner {
+  max-width: var(--maxw); margin: 0 auto;
+  padding: .78rem var(--gut);
+  display: flex; align-items: center; gap: 1.6rem; flex-wrap: wrap;
+  font-family: var(--mono); font-size: .68rem;
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.nav-mark { color: var(--blue); margin-right: auto; white-space: nowrap; }
+.nav a {
+  color: var(--soft); text-decoration: none;
+  padding-bottom: 3px; border-bottom: 1px solid transparent;
+  transition: color .18s ease, border-color .18s ease;
+}
+.nav a:hover { color: var(--ray); border-bottom-color: var(--ray); }
+
+/* ── hero ───────────────────────────────────────────────────── */
+.hero {
+  max-width: var(--maxw); margin: 0 auto;
+  padding: clamp(3rem, 8vw, 5.5rem) var(--gut) clamp(2.6rem, 6vw, 4rem);
+  display: block;
+}
+.eyebrow {
+  font-family: var(--mono); font-size: .69rem;
+  letter-spacing: .17em; text-transform: uppercase;
+  color: var(--ray); margin: 0 0 1.15rem;
+}
+h1 {
+  font-family: var(--disp); font-weight: 400;
+  font-size: clamp(3rem, 7.2vw, 5.2rem);
+  line-height: .95; letter-spacing: -.018em;
+  margin: 0 0 1.25rem; max-width: none;
+  text-wrap: balance;
+}
+h1 em { font-style: italic; color: var(--blue); }
+.lede {
+  font-size: clamp(1.05rem, 1.5vw, 1.22rem);
+  color: var(--soft); max-width: 46ch; margin: 0 0 1.7rem;
+}
+.byline {
+  font-family: var(--mono); font-size: .68rem;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--faint);
+  border-top: 1px solid var(--rule); padding-top: .95rem;
+  display: flex; gap: 1.3rem; flex-wrap: wrap; margin: 0;
+}
+.byline b { color: var(--ink); font-weight: 700; }
+
+/* ── hero byline: a credit field, set the way the sheet sets
+      every other field — mono label, then the value ─────────── */
+.hero-subtitle {
+  margin: .75rem 0 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: .34rem;
+}
+.hero-subtitle::before {
+  content: "";
+  width: 4.5rem;
+  height: 1px;
+  background: var(--blue-dim);
+  margin-bottom: 1.05rem;
+}
+.hero-role {
+  font-family: var(--mono);
+  font-size: .67rem;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--soft);
+}
+.hero-name {
+  font-family: var(--disp);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.55rem, 2.5vw, 2.05rem);
+  line-height: 1.05;
+  color: var(--ink);
+}
+
+/* ── capture record: a drawing-sheet title block ────────────── */
+.record {
+  border: 1px solid var(--ink);
+  background: var(--white);
+}
+.record-head {
+  background: var(--ink); color: var(--white);
+  padding: .6rem .9rem;
+  font-family: var(--mono); font-size: .64rem;
+  letter-spacing: .15em; text-transform: uppercase;
+  display: flex; justify-content: space-between; gap: 1rem;
+}
+.record-head span:last-child { color: var(--blue-dim); }
+.record-row { display: flex; border-bottom: 1px solid var(--rule); }
+.record-row:last-child { border-bottom: 0; }
+.record-cell {
+  flex: 1; padding: .62rem .9rem;
+  border-right: 1px solid var(--rule); min-width: 0;
+}
+.record-cell:last-child { border-right: 0; }
+.record-cell span {
+  display: block;
+  font-family: var(--mono); font-size: .6rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--faint);
+}
+.record-cell b {
+  display: block; margin-top: .18rem;
+  font-size: .84rem; font-weight: 600; color: var(--ink);
+}
+.record-row.is-marked .record-cell:first-child span,
+.record-row.is-marked .record-cell:first-child b { color: var(--ray); }
+
+/* ── sheets ─────────────────────────────────────────────────── */
+.sheet {
+  max-width: var(--maxw); margin: var(--sheet-gap) auto 0;
+  padding: clamp(2rem, 4.5vw, 3.2rem) var(--gut) 0;
+  border-top: 1px solid var(--rule);
+}
+.sheet-head {
+  display: flex; gap: 1.1rem; align-items: baseline;
+  margin-bottom: .85rem; flex-wrap: wrap;
+}
+.sheet-num {
+  font-family: var(--mono); font-size: .63rem;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--white); background: var(--blue);
+  padding: .28rem .6rem; white-space: nowrap;
+  position: relative; top: -.18em;
+}
+h2 {
+  font-family: var(--disp); font-weight: 400;
+  font-size: clamp(1.9rem, 3.6vw, 2.85rem);
+  line-height: 1.06; letter-spacing: -.012em;
+  margin: 0; max-width: 31ch;
+}
+
+/* ── prose ──────────────────────────────────────────────────── */
+.prose { max-width: none; }
+.prose p { margin: 0 0 1.05rem; color: var(--soft); }
+.prose p:last-child { margin-bottom: 0; }
+.prose strong { color: var(--ink); font-weight: 600; }
+.prose em { color: var(--ink); font-style: italic; }
+.sheet-head + .prose { margin-top: 1.15rem; }
+.plates + .prose,
+.specs + .prose { margin-top: clamp(2rem, 4vw, 2.8rem); }
+
+/* ── plates ─────────────────────────────────────────────────── */
+.plates {
+  display: grid; gap: clamp(1.6rem, 3.6vw, 2.6rem);
+  margin-top: clamp(2rem, 4.5vw, 3rem);
+}
+.plates-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.plates-gif { grid-template-columns: minmax(0, 380px) minmax(0, 1fr); align-items: start; }
+
+.plate { margin: 0; }
+.plate-tag {
+  display: flex; justify-content: space-between; gap: 1rem;
+  font-family: var(--mono); font-size: .63rem;
+  letter-spacing: .11em; text-transform: uppercase;
+  color: var(--faint); margin-bottom: .5rem;
+}
+.plate-tag .k { color: var(--blue); }
+.plate-tag .k-warm { color: var(--ray); }
+.plate-tag .id { white-space: nowrap; }
+
+/* registration frame — corner ticks, no box */
+.reg { position: relative; padding: 14px; }
+.reg img {
+  display: block; width: 100%; height: auto;
+  background: var(--white);
+}
+.ck {
+  position: absolute; width: 13px; height: 13px;
+  border: 1.2px solid var(--blue);
+}
+.ck1 { top: 0; left: 0;  border-right: 0; border-bottom: 0; }
+.ck2 { top: 0; right: 0; border-left: 0;  border-bottom: 0; }
+.ck3 { bottom: 0; left: 0;  border-right: 0; border-top: 0; }
+.ck4 { bottom: 0; right: 0; border-left: 0;  border-top: 0; }
+
+/* the signature: an orange dimension line stating camera distance */
+.dimline {
+  display: flex; align-items: center; gap: .65rem;
+  margin: .7rem 0 .75rem;
+  font-family: var(--mono); font-size: .62rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  color: var(--blue);
+}
+.dimline .ln {
+  flex: 1; height: 1px; background: currentColor; position: relative;
+}
+.dimline .ln::before,
+.dimline .ln::after {
+  content: ""; position: absolute; top: -4px;
+  width: 1px; height: 9px; background: currentColor;
+}
+.dimline .ln::before { left: 0; }
+.dimline .ln::after  { right: 0; }
+.dim-warm { color: var(--ray); }
+.dim-near .ln { flex: 0 1 14%; }
+.dim-half .ln { flex: 0 1 50%; }
+.dim-wide { margin-top: 1rem; }
+
+.plate figcaption,
+figcaption {
+  font-size: .82rem; line-height: 1.5;
+  color: var(--faint); margin: 0;
+}
+.plates-gif .prose-tight { max-width: 62ch; padding-top: .2rem; }
+
+/* ── filmstrip ──────────────────────────────────────────────── */
+.strip-head {
+  display: flex; justify-content: space-between; gap: 1rem;
+  font-family: var(--mono); font-size: .63rem;
+  letter-spacing: .12em; text-transform: uppercase;
+  color: var(--faint);
+  margin: clamp(2.4rem, 5vw, 3.2rem) 0 .6rem;
+  padding-bottom: .5rem; border-bottom: 1px solid var(--rule);
+}
+.strip-head span:last-child { color: var(--blue); }
+.strip {
+  display: grid; grid-template-columns: repeat(9, minmax(0, 1fr));
+  gap: .45rem;
+}
+.strip figure { margin: 0; position: relative; }
+.strip img {
+  display: block; width: 100%; height: auto; background: var(--white);
+  border: 1px solid var(--rule);
+}
+.strip .n {
+  position: absolute; top: .3rem; left: .3rem;
+  font-family: var(--mono); font-size: .55rem; letter-spacing: .06em;
+  color: var(--white); background: rgba(12, 35, 64, .72);
+  padding: .06rem .26rem;
+}
+.strip-note {
+  font-size: .82rem; color: var(--faint);
+  margin: .2rem 0 0; max-width: 62ch;
+}
+
+/* ── finding (the takeaway) ─────────────────────────────────── */
+.finding {
+  margin: clamp(2.4rem, 5vw, 3.2rem) 0 0;
+  padding: 1.35rem 0 0;
+  border-top: 1px solid var(--ink);
+  font-family: var(--disp); font-weight: 400;
+  font-size: clamp(1.3rem, 2.4vw, 1.72rem);
+  line-height: 1.32; letter-spacing: -.008em;
+  color: var(--ink); max-width: 44ch;
+}
+.finding::before {
+  content: "Finding"; display: block;
+  font-family: var(--mono); font-size: .62rem; font-weight: 400;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--ray); margin-bottom: .6rem;
+}
+
+/* ── specs table ────────────────────────────────────────────── */
+.specs {
+  width: 100%; border-collapse: collapse;
+  margin-top: clamp(1.6rem, 3.5vw, 2.2rem);
+  font-size: .84rem;
+  background: var(--white);
+  border: 1px solid var(--rule);
+}
+.specs th, .specs td {
+  text-align: left; padding: .62rem .9rem;
+  border-bottom: 1px solid var(--rule);
+  border-right: 1px solid var(--rule);
+}
+.specs th:last-child, .specs td:last-child { border-right: 0; }
+.specs tbody tr:last-child td { border-bottom: 0; }
+.specs th {
+  font-family: var(--mono); font-weight: 400; font-size: .6rem;
+  letter-spacing: .13em; text-transform: uppercase;
+  color: var(--white); background: var(--ink);
+  border-bottom-color: var(--ink);
+}
+.specs td { color: var(--soft); }
+.specs td:first-child { color: var(--ink); font-weight: 500; }
+.specs .mono { font-family: var(--mono); font-size: .93em; }
+
+/* ── footer ─────────────────────────────────────────────────── */
+.foot {
+  border-top: 1px solid var(--rule);
+  margin-top: var(--sheet-gap);
+}
+.foot-inner {
+  max-width: var(--maxw); margin: 0 auto;
+  padding: 1.6rem var(--gut) 3rem;
+  display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+  font-family: var(--mono); font-size: .65rem;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--faint);
+}
+.foot-links { display: flex; gap: 1.3rem; }
+.foot a {
+  color: var(--soft); text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+  transition: color .18s ease, border-color .18s ease;
+}
+.foot a:hover { color: var(--ray); border-bottom-color: var(--ray); }
+
+/* ── reveal: the drawing gets annotated as you reach it ─────── */
+.to-draw { opacity: 0; transform: translateY(9px); }
+.to-draw.is-drawn {
+  opacity: 1; transform: none;
+  transition: opacity .55s ease, transform .55s cubic-bezier(.2, .7, .3, 1);
+}
+.dimline.to-draw .ln { transform: scaleX(0); transform-origin: left center; }
+.dimline.to-draw.is-drawn .ln {
+  transform: scaleX(1);
+  transition: transform .7s cubic-bezier(.25, .8, .3, 1) .12s;
+}
+.is-static .to-draw { opacity: 1; transform: none; }
+.is-static .dimline.to-draw .ln { transform: none; }
+
+/* ── responsive ─────────────────────────────────────────────── */
+@media (max-width: 940px) {
+  .plates-gif { grid-template-columns: 1fr; }
+  .plates-gif .plate { max-width: 380px; }
+}
+
+@media (max-width: 720px) {
+  .prose { max-width: 460px; }
+  .plates-2 { grid-template-columns: 1fr; }
+  .plates-2 .plate { max-width: 460px; }
+  .strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .5rem; }
+  .record-row { flex-wrap: wrap; }
+  .record-cell { flex: 1 1 33%; }
+  .nav-mark { width: 100%; margin-bottom: .35rem; }
+  .nav-inner { gap: 1.15rem; }
+  .byline { gap: .25rem; flex-direction: column; }
+  .foot-inner { flex-direction: column; }
+  .reg { padding: 11px; }
+  .ck { width: 11px; height: 11px; }
+}
+
+@media (max-width: 460px) {
+  .specs { display: block; overflow-x: auto; white-space: nowrap; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* ── print: it is a drawing set, so let it behave like one ──── */
+@media print {
+  body { background: #fff; font-size: 10.5pt; }
+  .nav, .skip, .foot-links { display: none; }
+  .sheet { break-before: page; border-top: 0; margin-top: 0; }
+  .plate, .finding, .specs, .strip { break-inside: avoid; }
+  .to-draw { opacity: 1 !important; transform: none !important; }
+  .dimline.to-draw .ln { transform: none !important; }
+}

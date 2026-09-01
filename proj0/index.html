@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project 0: Becoming Friends with Your Camera</title>
+<meta name="description" content="CS 180 Project 0: perspective, focal length, and the center of projection — the wrong-way selfie, architectural compression, and a dolly zoom.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23EFF3F7'/><g fill='none' stroke='%230E7FA8' stroke-width='7'><path d='M6 6h22M6 6v22'/><path d='M94 6H72M94 6v22'/><path d='M6 94h22M6 94V72'/><path d='M94 94H72M94 94V72'/></g><circle cx='50' cy='50' r='15' fill='%23E8590C'/></svg>">
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-mark">CS 180 · Project 0</span>
+    <a href="#part1">Selfie</a>
+    <a href="#part2">Perspective</a>
+    <a href="#part3">Dolly Zoom</a>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="hero-title">
+    <h1>Becoming Friends with Your Camera</h1>
+    <p class="hero-subtitle">
+      <span class="hero-name">Jeffery Ren</span>
+    </p>
+  </div>
+</header>
+
+<main id="main">
+
+<!-- ═════════════════════════ PART 1 ═════════════════════════ -->
+<section class="sheet" id="part1">
+  <div class="sheet-head">
+    <span class="sheet-num">Part 1</span>
+    <h2>Selfie: The Wrong Way vs. The Right Way</h2>
+  </div>
+
+  <div class="prose">
+    <p>
+      Below you will see two photos of my roommate, who generously agreed to be the subject of this.
+      His wonderful face, now immortalized on the internet, depicts the effects of perspective distortion quite well.
+      The first photo was taken close to his face. For the second, I backed up several feet and adjusted the zoom to keep his head the same size in the frame.
+      While the second photo is blurry, which can be attributed to my older phone's camera, the difference is clear.
+    </p>
+    <p>
+      In the close photo, the nose is bigger, the ears aren't visible, and his head seems to taper off, almost as if it is being pulled backwards.
+      Contrast this with the stepped back photo, where the proportions of his face seem more natural. His face is wider, the jawline is more defined, and you can see his ears show.
+    </p>
+  </div>
+
+  <div class="plates plates-2">
+    <figure class="plate">
+      <div class="plate-tag">
+        <span class="k k-warm">Wrong way · close</span>
+      </div>
+      <div class="reg">
+        <i class="ck ck1"></i><i class="ck ck2"></i><i class="ck ck3"></i><i class="ck ck4"></i>
+        <img src="media/part1-close.jpg" alt="Close-up selfie on the wide lens, showing perspective distortion of the nose and forehead." loading="lazy" width="1200" height="1600">
+      </div>
+      <p class="dimline dim-warm dim-near">
+      </p>
+    </figure>
+
+    <figure class="plate">
+      <div class="plate-tag">
+        <span class="k">Right way · stepped back</span>
+      </div>
+      <div class="reg">
+        <i class="ck ck1"></i><i class="ck ck2"></i><i class="ck ck3"></i><i class="ck ck4"></i>
+        <img src="media/part1-far.jpg" alt="Portrait on the telephoto lens from farther away, with natural facial proportions." loading="lazy" width="1200" height="1600">
+      </div>
+      <p class="dimline">      
+      </p> 
+    </figure>
+  </div>
+
+  <div class="prose">
+    <p>
+      My thoughts as to why this happens. When the camera is close, the tip of the nose is much closer to the lens than the ears are, perhaps 3x closer.
+      However, after stepping back a few feet, the nose is no longer that much closer to the camera than the ears. The further you step back, the more trivial the differences in depth become. This is what I suspect causes the distortion in the first photo, and why the second photo looks more natural.
+    </p>
+  </div>
+</section>
+
+<!-- ═════════════════════════ PART 2 ═════════════════════════ -->
+<section class="sheet" id="part2">
+  <div class="sheet-head">
+    <span class="sheet-num">Part 2</span>
+    <h2>Architectural Perspective Compression</h2>
+  </div>
+
+  <div class="prose">
+    <p>
+      In this part, I experimented with the same effects, but on a building. In the first photo, I was far away from Grimes, and I zoomed in. 
+      I then walked closer to Grimes until it fit the frame the same, and took the second photo. 
+    </p>
+    <p>
+      The difference is clear; the first photo has a compressed perspective, while the second photo has more exaggerated depth. The top canopy of Grimes is what reall highlights this. 
+      We can see clearly how stretched the canopy is in the second photo, with the white building behind it looking much further back compared to the first photo, which compressed the dimension. 
+    </p>
+  </div>
+
+  <div class="plates plates-2" id="p2pair">
+    <figure class="plate">
+      <div class="plate-tag">
+        <span class="k">Far · zoomed in</span>
+      </div>
+      <div class="reg">
+        <i class="ck ck1"></i><i class="ck ck2"></i><i class="ck ck3"></i><i class="ck ck4"></i>
+        <img src="media/part2-far-zoomed.jpg" alt="Building facade photographed from far down the walkway with the lens zoomed in — the canopy louvers stay evenly spaced and the perspective looks compressed and flat." loading="lazy" width="1200" height="1600">
+      </div>
+      <p class="dimline">
+      </p>
+    </figure>
+
+    <figure class="plate">
+      <div class="plate-tag">
+        <span class="k k-warm">Close · no zoom </span>
+      </div>
+      <div class="reg">
+        <i class="ck ck1"></i><i class="ck ck2"></i><i class="ck ck3"></i><i class="ck ck4"></i>
+        <img src="media/part2-near-wide.jpg" alt="The same facade photographed from close up at wide angle — the canopy bays fan open overhead and the roofline converges steeply." loading="lazy" width="1200" height="1600">
+      </div>
+      <p class="dimline dim-warm dim-half">
+      </p>
+    </figure>
+  </div>
+
+  <div class="prose">
+    <p>
+      This happens for the same reason as in part 1; the difference in distance between the subject and the background from the camera is neglible when you stand far away, so the perspective is compressed and flattened. 
+      compare this with the second photo, where the camera is much closer to the subject. The difference in distance between the subject and the background from the camera is much more significant, so the perspective has more depth.
+    </p>
+  </div>
+</section>
+
+<!-- ═════════════════════════ PART 3 ═════════════════════════ -->
+<section class="sheet" id="part3">
+  <div class="sheet-head">
+    <span class="sheet-num">Part 3</span>
+    <h2>The Dolly Zoom: Albert in the Wild</h2>
+  </div>
+
+  <div class="plates plates-gif">
+    <figure class="plate">
+      <div class="reg">
+        <i class="ck ck1"></i><i class="ck ck2"></i><i class="ck ck3"></i><i class="ck ck4"></i>
+        <img src="media/part3-dollyzoom.gif" alt="Animated dolly zoom: an Einstein figurine stays the same size on a balcony rail while the hills and rooftops behind it swell dramatically." width="480" height="640">
+      </div>
+    </figure>
+
+    <div class="prose prose-tight">
+      <p>
+        In this part, I demonstrated the Dolly Zoom effect with an Albert Einstein funko pop. 
+        As I step back and zoom in, the background grows larger. 
+        This can best be seen by the rooftop growing nearer, to the point where it dominates the background and the hills become so zoomed in it is no longer recognizeable. 
+      </p>
+    </div>
+  </div>
+
+  <div class="strip-head">
+    <span>Individual photos</span>
+  </div>
+  <div class="strip">
+    <figure><img src="media/dolly/frame01.jpg" alt="Dolly zoom still 1: camera closest, widest angle." loading="lazy" width="480" height="640"><span class="n">01</span></figure>
+    <figure><img src="media/dolly/frame02.jpg" alt="Dolly zoom still 2." loading="lazy" width="480" height="640"><span class="n">02</span></figure>
+    <figure><img src="media/dolly/frame03.jpg" alt="Dolly zoom still 3." loading="lazy" width="480" height="640"><span class="n">03</span></figure>
+    <figure><img src="media/dolly/frame04.jpg" alt="Dolly zoom still 4." loading="lazy" width="480" height="640"><span class="n">04</span></figure>
+    <figure><img src="media/dolly/frame05.jpg" alt="Dolly zoom still 5." loading="lazy" width="480" height="640"><span class="n">05</span></figure>
+    <figure><img src="media/dolly/frame06.jpg" alt="Dolly zoom still 6." loading="lazy" width="480" height="640"><span class="n">06</span></figure>
+    <figure><img src="media/dolly/frame07.jpg" alt="Dolly zoom still 7." loading="lazy" width="480" height="640"><span class="n">07</span></figure>
+    <figure><img src="media/dolly/frame08.jpg" alt="Dolly zoom still 8." loading="lazy" width="480" height="640"><span class="n">08</span></figure>
+    <figure><img src="media/dolly/frame09.jpg" alt="Dolly zoom still 9: camera farthest, most zoomed in." loading="lazy" width="480" height="640"><span class="n">09</span></figure>
+  </div>
+  <p class="dimline dim-warm dim-wide">
+    <span>Camera near</span><span class="ln"></span><span>Camera far</span>
+  </p>
+</section>
+
+</main>
+
+<script>
+(function () {
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    document.documentElement.classList.add('is-static');
+    return;
+  }
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) { e.target.classList.add('is-drawn'); io.unobserve(e.target); }
+    });
+  }, { rootMargin: '0px 0px -12% 0px', threshold: 0.15 });
+  document.querySelectorAll('.plate, .dimline, .strip').forEach(function (el) {
+    el.classList.add('to-draw');
+    io.observe(el);
+  });
+})();
+</script>
+
+</body>
+</html>

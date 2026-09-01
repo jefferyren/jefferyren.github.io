@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+
+# Camera originals — kept locally, not needed to render the site
+*.HEIC
+*.heic
+
+# Unreferenced export (media/part3-dollyzoom.gif is the one the page uses)
+proj0/part3.gif
+
+# local dev tooling
+.claude/

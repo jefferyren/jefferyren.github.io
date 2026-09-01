@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CS 180 — Jeffery Ren</title>
+<meta name="description" content="Coursework for CS 180: Intro to Computer Vision and Computational Photography.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter+Tight:ital,wght@0,400;0,500;0,600;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%23EFF3F7'/><g fill='none' stroke='%230E7FA8' stroke-width='7'><path d='M6 6h22M6 6v22'/><path d='M94 6H72M94 6v22'/><path d='M6 94h22M6 94V72'/><path d='M94 94H72M94 94V72'/></g><circle cx='50' cy='50' r='15' fill='%23E8590C'/></svg>">
+
+<style>
+:root{
+  --paper:   #EFF3F7;
+  --white:   #FFFFFF;
+  --ink:     #0C2340;
+  --soft:    #3F5670;
+  --faint:   #8497AC;
+  --blue:    #0E7FA8;
+  --rule:    #C6D5E2;
+  --ray:     #E8590C;
+
+  --grid: rgba(14, 127, 168, .055);
+  --grid-step: 24px;
+
+  --disp: "Instrument Serif", "Iowan Old Style", Georgia, serif;
+  --body: "Inter Tight", ui-sans-serif, -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+  --mono: "Space Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  --maxw: 900px;
+  --gut: clamp(1.15rem, 4vw, 3rem);
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background-color:var(--paper);
+  background-image:
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size:var(--grid-step) var(--grid-step);
+  color:var(--ink);
+  font-family:var(--body);
+  font-size:17px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+.skip{
+  position:absolute; left:-9999px;
+  background:var(--ink); color:var(--paper);
+  padding:.6rem 1rem; font-family:var(--mono); font-size:.8rem;
+}
+.skip:focus{left:.75rem; top:.75rem; z-index:10}
+
+.wrap{max-width:var(--maxw); margin:0 auto; padding:0 var(--gut)}
+
+/* ── masthead ───────────────────────────────────────────── */
+.masthead{padding:clamp(4rem,12vh,7.5rem) 0 clamp(2.5rem,6vh,4rem)}
+
+.eyebrow{
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--blue); margin:0 0 1.4rem;
+}
+
+h1{
+  font-family:var(--disp); font-weight:400;
+  font-size:clamp(2.8rem, 8vw, 4.6rem); line-height:1.02;
+  letter-spacing:-.015em; margin:0;
+}
+
+.byline{
+  font-family:var(--disp); font-style:italic;
+  font-size:clamp(1.15rem,3vw,1.5rem); color:var(--soft);
+  margin:1rem 0 0;
+}
+
+.blurb{max-width:52ch; color:var(--soft); margin:1.8rem 0 0}
+
+/* ── index ──────────────────────────────────────────────── */
+.index-head{
+  display:flex; align-items:baseline; gap:1rem;
+  border-top:1px solid var(--rule); padding-top:1rem;
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.16em;
+  text-transform:uppercase; color:var(--faint);
+}
+.index-head .count{margin-left:auto}
+
+.index{list-style:none; margin:0; padding:0}
+
+.entry{border-bottom:1px solid var(--rule)}
+
+.entry a,
+.entry .stub{
+  display:grid;
+  grid-template-columns:5.5rem 1fr;
+  gap:0 1.5rem;
+  align-items:baseline;
+  padding:1.9rem .25rem;
+  text-decoration:none; color:inherit;
+  position:relative;
+}
+
+.entry a{transition:background-color .18s ease, padding-left .18s ease}
+.entry a:hover,
+.entry a:focus-visible{background:var(--white); padding-left:1rem; outline:none}
+.entry a:focus-visible{box-shadow:inset 3px 0 0 var(--ray)}
+
+/* registration tick — the marker that says "this plate is live" */
+.entry a::before{
+  content:""; position:absolute; left:.25rem; top:50%;
+  width:0; height:1px; background:var(--ray);
+  transform:translateY(-50%); transition:width .18s ease;
+}
+.entry a:hover::before{width:.55rem}
+
+.num{
+  font-family:var(--mono); font-size:.78rem; letter-spacing:.1em;
+  color:var(--blue); padding-top:.35rem;
+}
+
+.title{
+  font-family:var(--disp); font-size:clamp(1.5rem,4vw,2rem);
+  line-height:1.15; margin:0;
+}
+
+.desc{
+  grid-column:2; margin:.45rem 0 0; color:var(--soft);
+  font-size:.94rem; max-width:48ch;
+}
+
+.entry .stub{color:var(--faint)}
+.entry .stub .num{color:var(--faint)}
+.entry .stub .title{color:var(--faint)}
+
+.pending{
+  font-family:var(--mono); font-size:.68rem; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--faint);
+  border:1px solid var(--rule); padding:.15rem .5rem;
+  margin-left:.75rem; vertical-align:.28em; white-space:nowrap;
+}
+
+/* ── footer ─────────────────────────────────────────────── */
+footer{
+  margin-top:clamp(3rem,8vh,5rem);
+  padding:1.5rem 0 clamp(3rem,8vh,5rem);
+  font-family:var(--mono); font-size:.72rem; letter-spacing:.08em;
+  color:var(--faint);
+}
+footer a{color:var(--blue); text-decoration:none; border-bottom:1px solid var(--rule)}
+footer a:hover{border-bottom-color:var(--blue)}
+
+@media (prefers-reduced-motion:reduce){
+  *{transition:none !important}
+}
+</style>
+</head>
+<body>
+
+<a class="skip" href="#index">Skip to index</a>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">UC Berkeley · Fall 2026</p>
+    <h1>CS 180</h1>
+    <p class="byline">Jeffery Ren</p>
+    <p class="blurb">
+      Coursework for Intro to Computer Vision and Computational Photography.
+      Each project below is written up as its own drawing set.
+    </p>
+  </header>
+
+  <div class="index-head">
+    <span>Index</span>
+    <span class="count">1 of 6 posted</span>
+  </div>
+
+  <ol class="index" id="index">
+
+    <li class="entry">
+      <a href="proj0/">
+        <span class="num">Proj 0</span>
+        <h2 class="title">Becoming Friends with Your Camera</h2>
+        <p class="desc">
+          Perspective, focal length, and the center of projection — the wrong-way selfie,
+          architectural compression, and a dolly zoom.
+        </p>
+      </a>
+    </li>
+
+    <li class="entry">
+      <div class="stub">
+        <span class="num">Proj 1</span>
+        <h2 class="title">Colorizing the Prokudin-Gorskii Collection<span class="pending">Not yet posted</span></h2>
+      </div>
+    </li>
+
+  </ol>
+
+  <footer>
+    Jeffery Ren · <a href="https://cal-cs180.github.io/fa26/">CS 180, Fall 2026</a>
+  </footer>
+
+</div>
+
+</body>
+</html>
