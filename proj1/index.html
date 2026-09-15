@@ -394,6 +394,121 @@ table.ledger caption {
 .foot a { color: var(--brass); text-decoration: none; border-bottom: 1px solid transparent; }
 .foot a:hover, .foot a:focus-visible { border-bottom-color: var(--brass); }
 
+
+/* ── print ───────────────────────────────────────────────────────── */
+/* Printing a page like this one goes wrong in three separate ways, and
+   each needs its own answer:
+
+   1. Browsers drop every background by default, which here means the ink
+      hero, the ink footer, the plate frames and the tinted ledger rows all
+      vanish and their pale text is left on white. print-color-adjust fixes
+      that without the reader having to find a checkbox.
+   2. The layout is two-column above 880px. A portrait sheet is narrower
+      than that, so it collapses to the phone layout. Landscape sheets keep
+      the design the screen shows, and the grids are restated here so they
+      hold whatever paper is loaded.
+   3. Nothing tells the paginator where a break is acceptable, so rows get
+      cut in half and figures get stranded. The break rules below do.       */
+
+@page {
+  size: landscape;      /* wide enough to keep the two-column rows */
+  margin: 10mm 0;       /* Sideways there is no margin, so the plaster, the
+                           hero and the footer bleed off the sheet as they
+                           do off the screen; --gut still insets the text.
+                           Top and bottom keep a margin, because nothing
+                           else stops a broken paragraph from landing on
+                           the very edge of the paper. */
+}
+
+@media print {
+
+  /* 1 ── colour ─────────────────────────────────────────────────── */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+  }
+  /* The body background propagates to the page canvas, so the plaster
+     covers every sheet edge to edge, page margins included. Stated on html
+     as well so the propagation cannot be lost. */
+  html { background: var(--plaster); }
+
+  /* Paper takes tighter setting than a screen does, and the page has to
+     earn its height back somewhere: at screen leading, chapters I and IV
+     each overshoot their sheet by a few lines and stranded a near-empty
+     page behind them. */
+  body { font-size: 10.5pt; line-height: 1.56; }
+  .chapter { padding: 1.5rem 0; }
+  .chapter-head { margin-bottom: 1.1rem; padding-bottom: .8rem; }
+  .lead { font-size: 1.06rem; }
+
+  /* Fixed-position elements print on one sheet only, so the grain would
+     appear as a band on page 1 and nowhere else. At 3.5% it is no loss. */
+  body::after { display: none; }
+
+  .skip { display: none; }
+
+  /* 2 ── layout: hold the desktop rendering at any paper size ────── */
+  .nav {
+    position: static;
+    background: transparent;
+    backdrop-filter: none;
+  }
+  .split            { grid-template-columns: 1fr 1.15fr; }
+  .split.is-flipped > :first-child { order: 2; }
+  .figpair          { grid-template-columns: 1fr 1fr; }
+  .channels-row     { grid-template-columns: repeat(3, 1fr); }
+  /* auto-fill counts tracks against the sheet, which is narrower than a
+     laptop window and would drop the catalogue to three plates a row. Four
+     is what the screen shows, and it is also what lets two rows share a
+     sheet on A4 rather than one row per sheet. */
+  .plates           { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+  /* The Emir pair is the tallest figure in the document. Left at its
+     natural height it needs more of a sheet than is usually left when it
+     comes up, and the paginator answers by pushing the pair to a sheet of
+     its own and leaving a two-thirds-empty page behind it. */
+  .figpair figure { display: flex; flex-direction: column; align-items: center; }
+  .figpair img    { width: auto; max-width: 100%; max-height: 46vh; }
+  .figpair figcaption { align-self: stretch; }
+
+  /* On screen the stack is lifted out of flow and fitted to the height of
+     the text beside it. Across a page break that height is meaningless, so
+     in print the plates return to the flow — but capped at a third of a
+     sheet each, so the three of them still keep pace with the column of
+     text they belong to instead of running a page behind it. */
+  .figstack-wrap   { position: static; height: auto; }
+  .figstack        { position: static; inset: auto; }
+  .figstack figure { flex: 0 0 auto; align-items: center; }
+  .figstack img    { width: auto; max-width: 100%; max-height: 27vh; }
+
+  /* 3 ── pagination ─────────────────────────────────────────────── */
+  /* A heading alone at the foot of a sheet is the worst break of all. */
+  .chapter-head, h2 { break-after: avoid; }
+
+  /* Figures are single thoughts — cut one and both halves lose. A .split
+     row is deliberately not in this list: several of them are taller than a
+     sheet, and asking the paginator to keep one whole only makes it throw
+     the whole row onto the next page and leave a void behind. */
+  .fig, .figpair figure, .channels, .cycle figure,
+  .plate, .eq, .katex-display, .ledger tr, .ledger-key {
+    break-inside: avoid;
+  }
+  /* If the ledger does run past a sheet, carry its column headings over. */
+  .ledger thead { display: table-header-group; }
+
+  /* One chapter per sheet where it fits. The page is read as five numbered
+     chapters, so that is where a break belongs — and it stops a chapter
+     head from being left at the foot of a sheet. */
+  .chapter { break-before: page; }
+
+  p { orphans: 3; widows: 3; }
+
+  /* The footer is a colophon, not a chapter, and on screen its generous
+     margin is the end of a long scroll. On paper that same margin is the
+     difference between the footer joining the last plates and being
+     marooned on a sheet of its own. */
+  .foot { break-before: avoid; margin-top: 2rem; padding: 1.3rem 0; }
+}
 </style>
 </head>
 <body>
