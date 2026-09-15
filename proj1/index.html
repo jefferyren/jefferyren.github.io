@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Images of the Russian Empire — CS 180 Project 1</title>
+<meta name="description" content="CS 180 Project 1: recovering color photographs from Sergei Prokudin-Gorskii's three-exposure glass plates — exhaustive search, image pyramids, and gradient-domain alignment.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;0,6..96,500;1,6..96,400&family=PT+Serif:ital,wght@0,400;0,700;1,400&family=PT+Sans+Narrow:wght@400;700&family=PT+Mono&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.6/katex.min.css" integrity="sha512-hlhL0Hg3cxOco8tCQqGSQJpKClqXth8ioVSeCyXoRBvcWvMJGlKAtgz6McECrKqrzwiTtZf/p8U+LPzShtmgVw==" crossorigin="anonymous" referrerpolicy="no-referrer">
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.6/katex.min.js" integrity="sha512-R6ebU8e1iPsUu+8q3BMGd8M7DyKQcB2lVvWSyTC1RK7O3ywVWCbHDr4a9C10w3HNbYvhxiRtIwjE5w3hPRwzRw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.18.6/contrib/auto-render.min.js" integrity="sha512-0HzJcHCD+wBh9kNUUcm3DWH9IbNDfudsYyMD5EHwSuFK6aEsaa/UEPqqk4t0pm4bbmwR6A11yNsD7Q+nz6XF+Q==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%231E211D'/><circle cx='38' cy='42' r='22' fill='%23FF0000' opacity='.75'/><circle cx='62' cy='42' r='22' fill='%2300FF00' opacity='.75'/><circle cx='50' cy='62' r='22' fill='%230000FF' opacity='.75'/></svg>">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════
+   RUSSIA IN COLOR — design tokens
+   70% contemporary museum · 20% Style Moderne · 10% photographic lab
+   ══════════════════════════════════════════════════════════════════ */
+:root {
+  /* Ground and ink */
+  --plaster:    #E8DFC9;   /* warm parchment — the exhibition wall */
+  --plaster-2:  #DED3B9;   /* recessed panel, one step deeper      */
+  --ink:        #1E211D;   /* dark charcoal — text, dark chambers  */
+  --ink-soft:   #4A4E46;   /* secondary text on plaster            */
+
+  /* Architectural accents, used sparingly */
+  --burgundy:   #662D32;
+  --forest:     #30473B;
+  --ceramic:    #397070;
+  --brass:      #A68A54;
+
+  --rule:       rgba(30, 33, 29, .20);
+  --rule-fine:  rgba(30, 33, 29, .10);
+  --brass-fine: rgba(166, 138, 84, .38);
+
+  --display: "Bodoni Moda", "Didot", "Times New Roman", serif;
+  --serif:   "PT Serif", Georgia, serif;
+  --narrow:  "PT Sans Narrow", "Helvetica Neue", sans-serif;
+  --mono:    "PT Mono", ui-monospace, Menlo, monospace;
+
+  --measure: 34rem;
+  --page:    78rem;
+  --gut:     clamp(1.25rem, 5vw, 4rem);
+
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+html {
+  scroll-padding-top: 4.5rem;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--plaster);
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 17px;
+  line-height: 1.68;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Plaster grain — desaturated and very faint. feTurbulence emits color
+   noise by default, which visibly hazes dark imagery, so it is flattened
+   to luminance first. */
+body::after {
+  content: "";
+  position: fixed; inset: 0;
+  pointer-events: none; z-index: 200;
+  opacity: .035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='4'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.skip {
+  position: absolute; left: -9999px;
+  background: var(--ink); color: var(--plaster);
+  padding: .65rem 1rem; font-family: var(--narrow);
+  letter-spacing: .1em; text-transform: uppercase; font-size: .82rem;
+}
+.skip:focus { left: .75rem; top: .75rem; z-index: 300; }
+
+:focus-visible { outline: 2px solid var(--ceramic); outline-offset: 3px; }
+
+.wrap { max-width: var(--page); margin: 0 auto; padding: 0 var(--gut); }
+.column { max-width: var(--measure); }
+/* A .column that stands alone in a full-width chapter (rather than sharing a
+   .split row) runs the full page width, so the text lines up with the figures
+   and plate grid it introduces instead of leaving the right half empty. */
+.chapter > .prose.column { max-width: none; }
+
+/* ── navigation ──────────────────────────────────────────────────── */
+.nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(232, 223, 201, .93);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--rule);
+}
+.nav::after {                       /* the brass hairline under the bar */
+  content: ""; display: block; height: 2px;
+  background: linear-gradient(90deg,
+    transparent, var(--brass-fine) 12%, var(--brass-fine) 88%, transparent);
+}
+.nav-inner {
+  max-width: var(--page); margin: 0 auto;
+  padding: .8rem var(--gut);
+  display: flex; align-items: baseline; gap: 1.5rem; flex-wrap: wrap;
+}
+.nav-mark {
+  font-family: var(--display); font-size: 1rem;
+  letter-spacing: .16em; text-transform: uppercase;
+  margin-right: auto; color: var(--ink); white-space: nowrap;
+}
+.nav a {
+  font-family: var(--narrow); font-size: .82rem;
+  letter-spacing: .15em; text-transform: uppercase;
+  color: var(--ink-soft); text-decoration: none;
+  padding-bottom: 2px; border-bottom: 1px solid transparent;
+}
+.nav a:hover, .nav a:focus-visible { color: var(--burgundy); border-bottom-color: var(--burgundy); }
+
+/* ── hero ─────────────────────────────────────────────────────────── */
+.hero {
+  background: var(--ink);
+  color: var(--plaster);
+  padding: clamp(3.5rem, 9vw, 7rem) 0 clamp(3rem, 7vw, 5rem);
+  position: relative; overflow: hidden;
+}
+.hero-inner { max-width: var(--page); margin: 0 auto; padding: 0 var(--gut); }
+
+.hero h1 {
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(2.1rem, 6.6vw, 5.6rem);
+  line-height: 1.04; letter-spacing: -.015em;
+  margin: 0 0 .75rem; color: var(--plaster);
+  text-wrap: balance;
+}
+.hero h1 em { font-style: italic; color: var(--brass); }
+.hero-sub {
+  font-family: var(--display); font-weight: 400; font-style: italic;
+  font-size: clamp(1.05rem, 2.3vw, 1.7rem);
+  line-height: 1.3; color: var(--brass);
+  margin: 0 0 1.8rem; text-wrap: balance;
+}
+.hero-meta {
+  font-family: var(--narrow); font-size: .88rem;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: rgba(232, 223, 201, .62);
+  display: flex; flex-wrap: wrap; gap: .6rem 1.4rem;
+  border-top: 1px solid rgba(232, 223, 201, .18);
+  padding-top: 1rem; margin-bottom: 0;
+}
+
+/* ── chapters ────────────────────────────────────────────────────── */
+.chapter { padding: clamp(2.5rem, 7vw, 4.5rem) 0; }
+.chapter-head {
+  display: grid; grid-template-columns: auto 1fr; gap: 1.4rem;
+  align-items: start; margin-bottom: clamp(1.8rem, 4vw, 2.6rem);
+  padding-bottom: 1.1rem; border-bottom: 1px solid var(--rule);
+}
+.chapter-num {
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(2.6rem, 7vw, 4.6rem); line-height: .8;
+  color: var(--brass); font-feature-settings: "lnum";
+}
+.chapter-titles h2 {
+  font-family: var(--display); font-weight: 400;
+  font-size: clamp(1.6rem, 4vw, 2.5rem); line-height: 1.12;
+  margin: 0; letter-spacing: -.01em;
+}
+
+.prose p { margin: 0 0 1.15rem; color: var(--ink-soft); }
+.prose p:last-child { margin-bottom: 0; }
+/* Consecutive .prose blocks (split by a <pre> or just authored separately)
+   would otherwise butt together, since the last <p> in each has no margin. */
+.prose + .prose { margin-top: 1.15rem; }
+.prose strong { color: var(--ink); font-weight: 700; }
+.lead { font-size: 1.12rem; color: var(--ink) !important; }
+
+/* ── display equations ───────────────────────────────────────────── */
+/* Authored as TeX inside \[ … \] and typeset by KaTeX on load. If the CDN
+   or JS is unavailable the raw TeX stays visible in the mono face, which is
+   no worse than the ASCII formulas it replaced. */
+.eq {
+  margin: clamp(1.5rem, 3.5vw, 2.2rem) 0;
+  color: var(--ink);
+  font-family: var(--mono); font-size: .8rem;  /* unrendered fallback only */
+  text-align: center;
+  overflow-x: auto; overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+}
+/* Once KaTeX has run, its own metrics take over. */
+.eq .katex { font-size: clamp(.95rem, .55rem + .8vw, 1.16rem); }
+.eq .katex-display { margin: 0; }
+.eq .katex-display > .katex { text-align: center; }
+
+/* ── figures ─────────────────────────────────────────────────────── */
+.fig { margin: clamp(1.8rem, 4vw, 2.6rem) 0; }
+.fig img { display: block; width: 100%; border: 1px solid var(--rule); }
+.fig figcaption, .channels figcaption, .plate-label {
+  font-family: var(--mono); font-size: .74rem; line-height: 1.75;
+  color: var(--ink-soft); margin-top: .7rem;
+}
+.fig-wide { grid-column: 1 / -1; }
+
+/* Two plates side by side, each carrying its own caption. Mobile-first like
+   .channels-row: one column until there is room for the comparison. */
+.figpair {
+  margin: clamp(1.8rem, 4vw, 2.6rem) 0;
+  display: grid; gap: clamp(.9rem, 2.2vw, 1.5rem);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 46rem) {
+  .figpair { grid-template-columns: 1fr 1fr; }
+}
+.figpair figure { margin: 0; }
+.figpair img { display: block; width: 100%; border: 1px solid var(--rule); }
+.figpair figcaption {
+  font-family: var(--mono); font-size: .74rem; line-height: 1.75;
+  color: var(--ink-soft); margin-top: .7rem;
+}
+
+/* Editorial two-up: text beside plate, alternating */
+.split {
+  display: grid; gap: clamp(1.5rem, 4vw, 3rem);
+  align-items: center;
+}
+/* Grid items default to min-width:auto, so a wide child (a <pre> formula, a
+   table) would refuse to shrink and starve the other column. */
+.split > * { min-width: 0; }
+@media (min-width: 880px) {
+  .split { grid-template-columns: 1fr 1.15fr; }
+  .split.is-flipped > :first-child { order: 2; }
+}
+
+/* Right-hand column: plates stacked beside a long passage of text */
+.figstack { display: flex; flex-direction: column; gap: clamp(1rem, 2.5vw, 1.6rem); }
+.figstack figure { margin: 0; }
+.figstack img {
+  display: block; width: 100%;
+  border: 1px solid var(--rule); background: var(--ink);
+}
+/* Above the two-column breakpoint the stack is taken out of flow, so the row
+   height is set by the text alone and the plates scale to fit beside it. */
+@media (min-width: 880px) {
+  .figstack-wrap { position: relative; height: 100%; }
+  .figstack { position: absolute; inset: 0; }
+  /* align-items centers both the plate and its caption in the column: the
+     plate is narrower than the column because its width follows the aspect
+     ratio, and the caption then shrinks to sit directly under it. */
+  .figstack figure { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; align-items: center; }
+  /* width:auto lets the replaced element derive its width from the image's
+     own aspect ratio, so the box hugs the plate and there is no letterbox. */
+  .figstack img { flex: 1 1 auto; min-height: 0; width: auto; max-width: 100%; }
+}
+.figstack figcaption {
+  font-family: var(--mono); font-size: .72rem; line-height: 1.7;
+  color: var(--ink-soft); margin-top: .45rem;
+}
+/* ── one turn of the pyramid loop, beside section III ─────────────── */
+/* The three panels share a pixel scale: the subsampled one is drawn at half
+   the width of the other two, which is the entire point of the figure. So
+   unlike .figstack this stack keeps its natural size and is never fitted to
+   the height of the text beside it. */
+.cycle { display: flex; flex-direction: column; gap: clamp(.9rem, 2.2vw, 1.4rem); }
+/* Centered in the column the way the plates in II are: the figure spans the
+   column, the panel centers inside it, and the caption shrinks to sit under
+   the panel rather than running the full width. */
+.cycle figure {
+  margin: 0; display: flex; flex-direction: column; align-items: center;
+}
+/* Sized so the stack runs level with the passage of text beside it. The
+   panels are exported at 2x and shown smaller, which keeps them sharp on a
+   high-density screen. */
+.cycle img {
+  display: block; width: 320px; max-width: 100%;
+  border: 1px solid var(--rule); background: var(--ink);
+}
+.cycle figure.is-half img { width: 160px; }
+.cycle figcaption {
+  font-family: var(--mono); font-size: .72rem; line-height: 1.7;
+  color: var(--ink-soft); margin-top: .45rem;
+}
+
+/* ── the three exposures side by side, in section IV ──────────────── */
+/* Three panels of one plate, so they share a width and read as one strip.
+   On a narrow screen they stack, since at a third of a phone's width the
+   brightness inversion they exist to show would be invisible. */
+.channels { margin: clamp(1.8rem, 4vw, 2.6rem) 0; }
+.channels-row {
+  display: grid; gap: clamp(.5rem, 1.4vw, .9rem);
+  grid-template-columns: 1fr;
+}
+@media (min-width: 46rem) {
+  .channels-row { grid-template-columns: repeat(3, 1fr); }
+}
+.channels img {
+  display: block; width: 100%; border: 1px solid var(--rule); background: var(--ink);
+}
+
+.split.is-top { align-items: start; }
+
+/* ── archival table ──────────────────────────────────────────────── */
+.tablewrap { overflow-x: auto; margin: clamp(1.6rem, 4vw, 2.4rem) 0; }
+table.ledger {
+  width: 100%; border-collapse: collapse;
+  font-family: var(--mono); font-size: .8rem;
+}
+table.ledger caption {
+  caption-side: top; text-align: left;
+  font-family: var(--narrow); font-size: .82rem;
+  letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-soft); padding-bottom: .8rem;
+}
+.ledger th {
+  font-family: var(--narrow); font-weight: 700; font-size: .78rem;
+  letter-spacing: .13em; text-transform: uppercase;
+  text-align: left; color: var(--ink);
+  border-bottom: 1.5px solid var(--ink); padding: .5rem .9rem .5rem 0;
+  white-space: nowrap;
+}
+.ledger td {
+  padding: .45rem .9rem .45rem 0;
+  border-bottom: 1px solid var(--rule-fine); color: var(--ink-soft);
+  white-space: nowrap;
+}
+.ledger td:first-child { color: var(--ink); font-family: var(--serif); }
+.ledger tr:last-child td { border-bottom: 1px solid var(--rule); }
+.ledger .bad { color: var(--burgundy); font-weight: 700; }
+
+/* a little breathing room so the tinted rows don't crowd the plate name */
+.ledger th:first-child,
+.ledger td:first-child { padding-left: .8rem; }
+
+.ledger tr.is-fail td { background: rgba(102, 45, 50, .11); }
+.ledger tr.is-fail td:first-child { color: var(--burgundy); }
+.ledger tr.is-own td { background: rgba(57, 112, 112, .10); }
+.ledger tr.is-own td:first-child { color: var(--ceramic); }
+
+.ledger-key {
+  display: flex; flex-wrap: wrap; gap: .4rem 2rem;
+  margin: .9rem 0 0; padding: 0;
+  font-family: var(--narrow); font-size: .82rem; color: var(--ink-soft);
+}
+.ledger-key b { font-weight: 700; }
+.ledger-key .k-fail b { color: var(--burgundy); }
+.ledger-key .k-own  b { color: var(--ceramic); }
+
+/* ── plate catalogue ─────────────────────────────────────────────── */
+.plates {
+  display: grid; gap: clamp(1.5rem, 3.5vw, 2.6rem);
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr));
+  margin-top: clamp(1.9rem, 4vw, 3rem);
+}
+.plate figure { margin: 0; }
+.plate-frame {
+  position: relative; background: var(--ink);
+  border: 1px solid var(--rule); overflow: hidden;
+}
+.plate-frame img { display: block; width: 100%; }
+.plate-label { margin-top: .6rem; }
+.plate-no {
+  font-family: var(--narrow); font-size: .74rem;
+  letter-spacing: .16em; color: var(--brass);
+  display: block; margin-bottom: .1rem;
+}
+.plate-name {
+  font-family: var(--display); font-size: 1.05rem;
+  color: var(--ink); display: block; line-height: 1.3;
+}
+.plate-rule { height: 1px; background: var(--rule-fine); margin: .45rem 0; }
+.plate-data {
+  font-family: var(--mono); font-size: .7rem; line-height: 1.7;
+  color: var(--ink-soft); display: block;
+}
+
+/* ── footer ──────────────────────────────────────────────────────── */
+.foot {
+  background: var(--ink); color: rgba(232, 223, 201, .65);
+  margin-top: clamp(3.5rem, 8vw, 6rem);
+  padding: clamp(2.5rem, 6vw, 4rem) 0;
+}
+.foot-inner {
+  max-width: var(--page); margin: 0 auto; padding: 0 var(--gut);
+  display: flex; flex-wrap: wrap; gap: 1.2rem 2.5rem;
+  justify-content: space-between; align-items: baseline;
+  font-family: var(--narrow); font-size: .84rem;
+  letter-spacing: .13em; text-transform: uppercase;
+}
+.foot a { color: var(--brass); text-decoration: none; border-bottom: 1px solid transparent; }
+.foot a:hover, .foot a:focus-visible { border-bottom-color: var(--brass); }
+
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <span class="nav-mark">Prokudin-Gorskii</span>
+    <a href="#background">Background</a>
+    <a href="#search">Search</a>
+    <a href="#pyramid">Pyramid</a>
+    <a href="#edges">Edges</a>
+    <a href="#catalogue">Catalogue</a>
+  </div>
+</nav>
+
+<!-- ══════════════════════════ HERO ══════════════════════════ -->
+<header class="hero">
+  <div class="hero-inner">
+    <h1>Images of the <em>Russian Empire</em></h1>
+    <p class="hero-sub">Colorizing the Prokudin-Gorskii photo collection</p>
+    <div class="hero-meta">
+      <span>Jeffery Ren</span>
+    </div>
+
+  </div>
+</header>
+
+<main id="main">
+<div class="wrap">
+
+<!-- ══════════════════════════ I · THE PLATE ══════════════════════════ -->
+<section class="chapter" id="background">
+  <div class="chapter-head">
+    <span class="chapter-num">I</span>
+    <div class="chapter-titles">
+      <h2>Background</h2>
+    </div>
+  </div>
+
+  <div class="split">
+    <div class="prose column">
+      <p>Between roughly 1905 and 1915, Sergei Mikhailovich Prokudin-Gorskii traveled
+    through Russia, photographing through a unique method. He essentially took three
+    photographs of the same scene one after another, each through a different color
+    filter. Then, by recombining the three exposures, we can reproduce a colored image.</p>
+
+    <p>This project was centered around combining the three exposures to create a colored image. 
+      What the Library of Congress scanned was one tall grayscale image per plate, holding all three exposures stacked vertically. 
+      So, recovering the colored photograph meant splitting the image into its three exposures, then stacking them. 
+      However, one main problem is that since the three exposures were taken one after another, things changed in between each shot. 
+      For example, the camera may have shifted, the plate may have moved, or the scene may have changed slightly.
+      So, simply stacking the three plates would not create a perfect colored image.</p>
+
+    <p>
+      As we can see in the example on the right, stacking the three exposures exposes how the plates were not correctly aligned. The color channels are offset from each other, creating an obvious visual effect of duplicate edges, almost like a 3D image effect. 
+      Thus, the goal of this project was to find the correct offsets for each channel, and then apply those offsets to create a properly aligned colored image.
+    </p>
+    </div>
+
+    <figure class="fig">
+      <img src="media/cathedral-unaligned.jpg" alt="The cathedral plate with its three color channels stacked with no alignment, showing red and cyan fringing on every edge">
+      <figcaption>cathedral: channels stacked naively with no alignment applied</figcaption>
+    </figure>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════ II · SEARCH ══════════════════════════ -->
+<section class="chapter" id="search">
+  <div class="chapter-head">
+    <span class="chapter-num">II</span>
+    <div class="chapter-titles">
+      <h2>Exhaustive search at one scale</h2>
+    </div>
+  </div>
+
+  <div class="split is-top">
+    <div>
+    <div class="prose column">
+    <p>
+    Unlike humans, a computer isn't able to intuitively tell how far apart two channels are. 
+    So, instead, we can compare the two channels at a range of offsets, then select the offset that produces the best match.
+    The range, or search radius, I selected was 15 pixels, meaning that I checked every displacement from (−15, −15) to (15, 15).</p>
+
+    <p>
+      That leaves the question of how we determine the best match. In the project, I used <strong>L2 norm</strong> (Euclidean distance):</p>
+  </div>
+
+  <div class="eq">\[ \ell_2(a,\,b) \;=\; \sqrt{\sum_i \left(a_i - b_i\right)^2} \]</div>
+
+  <div class="prose column">
+    <p>and <strong>normalized cross-correlation</strong> (NCC), which
+    subtracts the mean from each channel, scales both to unit length, and takes their
+    dot product:</p>
+  </div>
+
+  <div class="eq">\[ \operatorname{ncc}(a,\,b) \;=\;
+      \frac{a - \bar{a}}{\lVert a - \bar{a} \rVert}
+      \;\cdot\;
+      \frac{b - \bar{b}}{\lVert b - \bar{b} \rVert} \]</div>
+
+  <div class="prose column">
+    <p> In practice, I negated the L2 so that both metrics interpret a higher score as better.</p>
+
+    <p>
+      A separate piece of processing I did to the images was cropping. I cropped 12% off of each side before scoring, essentially cutting out the black and white borders across all three channels before feeding them into the scoring metrics. 
+      This was so that the metric would be measuring the photograph itself, rather than producing a high score simply because the borders matched. 
+    </p>
+
+    <p>On the three low-resolution JPEGs this works well, and both metrics return
+    exactly the same offsets.</p>
+  </div>
+
+  <div class="prose column">
+    
+    <p>
+    However, this approach has two limits that make it unusable on the full-size .tif scans. First, in the full sized images, the displacements can run much larger, making the number of candidates required to find the best match grow significantly. 
+    Second, each metric evaluation will look at all the pixels of a full-resolution channel, and doing that for all candidates becomes computationally expensive and will take a long time.
+    So, this motivates the next section, where we can use a pyramid to reduce the number of candidates and the number of pixels we need to look at.</p>
+  </div>
+
+    </div>
+
+    <div class="figstack-wrap">
+    <div class="figstack">
+      <figure>
+        <img src="media/single-cathedral.jpg" alt="The cathedral plate aligned by single-scale search">
+        <figcaption>cathedral: G (5, 2), R (12, 3)</figcaption>
+      </figure>
+      <figure>
+        <img src="media/single-monastery.jpg" alt="The monastery plate aligned by single-scale search">
+        <figcaption>monastery: G (&minus;3, 2), R (3, 2)</figcaption>
+      </figure>
+      <figure>
+        <img src="media/single-tobolsk.jpg" alt="The tobolsk plate aligned by single-scale search">
+        <figcaption>tobolsk: G (3, 3), R (6, 3)</figcaption>
+      </figure>
+    </div>
+    </div>
+  </div>
+
+</section>
+
+
+<!-- ══════════════════════════ III · PYRAMID ══════════════════════════ -->
+<section class="chapter" id="pyramid">
+  <div class="chapter-head">
+    <span class="chapter-num">III</span>
+    <div class="chapter-titles">
+      <h2>Pyramid</h2>
+    </div>
+  </div>
+
+  <div class="split is-top">
+    <div class="prose column">
+    <p>
+      To fix the problem of searching at full resolution, I implemented the strategy of using an image pyramid.
+      Essentially what this does is take the image, blurs it, downsample it, and repeats, creating a series of smaller images. 
+      Then, I can perform the exhaustive search as described in section 2 on the smallest image, which is much faster, and then use that result to inform the search on the next larger image, and so on until I reach the original resolution.
+    </p>
+
+    <p>
+      For example, Emir's green channel is 49 pixels down and 24 to the right in
+      the full sized scan. But, by halving the image five times, the same offset
+      is about a pixel and a half at that level. 
+    </p>
+
+    <p>
+      The pyramid was constructed by starting at the full sized image, then blurring it and subsampling it to create the next level, and repeating this process until the shorter side of the image would fall below 64 pixels.
+      The blur was done using an approximation of the Gaussian distribution: [1, 4, 6, 4, 1] / 16, applied once down the columns and once across
+      the rows, which gives the same result as convolving with a 5 × 5 Gaussian kernel but is more efficient.
+    </p>
+
+    <p>
+      The search itself starts from the top level of the pyramid, the most coarse image. At this top level, the same
+      exhaustive search as described in section 2 is performed. Since the image is small, the search is fast. Then, I go down one layer. 
+      As I go down each layer, I double the displacement I currently have, since the image was subsampled by a factor of 2 originally. 
+      Then, I perform a search around that doubled displacement, but only searching 2 pixels around it as a correction.
+    </p>
+    
+    <p>
+      The results of using the pyramid are shown in the table below. Every offset in it comes from
+      NCC scored on raw pixels. The pyramid was able to align 16 of the 17 plates, with only Emir's red channel failing.
+      Additionally, this method also worked on my three selected plates, the greenhouse, peonies, and poppies plates.
+      Section 5 re-runs every plate on gradient magnitude instead, which fixes Emir but also changes the offsets for some of the other plates.
+    </p>
+    </div>
+
+    <div class="cycle">
+      <figure>
+        <img src="media/cycle-orig.jpg" alt="A detail of the harvesters plate partway down the pyramid: tea bushes in rows on a hillside behind a line of pickers, sharp">
+        <figcaption> harvesters</figcaption>
+      </figure>
+      <figure>
+        <img src="media/cycle-blur.jpg" alt="The same detail after the separable binomial blur, visibly softer: the rows of bushes have lost their fine texture">
+        <figcaption> harvesters blurred</figcaption>
+      </figure>
+      <figure class="is-half">
+        <img src="media/cycle-half.jpg" alt="The blurred detail with every other row and column kept, at half the width of the panels above it">
+        <figcaption> harvesters subsampled </figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <div class="tablewrap">
+    <table class="ledger">
+      <thead>
+        <tr><th>Plate</th><th>Green (dy, dx)</th><th>Red (dy, dx)</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>cathedral</td><td>(5, 2)</td><td>(12, 3)</td></tr>
+        <tr><td>church</td><td>(25, 4)</td><td>(58, −4)</td></tr>
+        <tr class="is-fail"><td>emir</td><td>(49, 24)</td><td class="bad">(483, −461)</td></tr>
+        <tr><td>harvesters</td><td>(60, 17)</td><td>(124, 13)</td></tr>
+        <tr><td>icon</td><td>(41, 17)</td><td>(89, 23)</td></tr>
+        <tr><td>ilemselga</td><td>(40, 7)</td><td>(130, 11)</td></tr>
+        <tr><td>melons</td><td>(81, 10)</td><td>(178, 13)</td></tr>
+        <tr><td>monastery</td><td>(−3, 2)</td><td>(3, 2)</td></tr>
+        <tr><td>religous_painting</td><td>(27, 3)</td><td>(68, 7)</td></tr>
+        <tr><td>self_portrait</td><td>(79, 29)</td><td>(176, 37)</td></tr>
+        <tr><td>siren</td><td>(49, −6)</td><td>(96, −25)</td></tr>
+        <tr><td>three_generations</td><td>(53, 14)</td><td>(111, 11)</td></tr>
+        <tr><td>tobolsk</td><td>(3, 3)</td><td>(6, 3)</td></tr>
+        <tr><td>wharf</td><td>(15, −7)</td><td>(82, −16)</td></tr>
+        <tr class="is-own"><td>greenhouse</td><td>(60, 28)</td><td>(126, 35)</td></tr>
+        <tr class="is-own"><td>peonies</td><td>(51, 3)</td><td>(104, −6)</td></tr>
+        <tr class="is-own"><td>poppies</td><td>(8, 8)</td><td>(60, 13)</td></tr>
+      </tbody>
+    </table>
+    <p class="ledger-key">
+      <span><b>metric</b>: NCC on raw pixels </span>
+      <span class="k-fail"><b>emir</b>: the only plate of the seventeen that fails </span>
+      <span class="k-own"><b>greenhouse, peonies, poppies</b>: my three selected plates </span>
+    </p>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════ IV · EDGES ══════════════════════════ -->
+<section class="chapter" id="edges">
+  <div class="chapter-head">
+    <span class="chapter-num">IV</span>
+    <div class="chapter-titles">
+      <h2>Fixing Emir: Aligning on edges, not brightness</h2>
+    </div>
+  </div>
+
+  <div class="prose column">
+    <p class="lead">Emir was the one plate that has not been rendered properly by our methods so far. The reason is likely because of his robe. 
+      As seen below, under the blue filter it is the brightest thing, while under the red it is the darkest. 
+      Because the blue and red channels are almost inverted, the NCC metric ended up finding the bright wall of the red channel
+      to match better over the bright robe of the blue channel, resulting in a misalignment.
+    </p>
+  </div>
+
+  <figure class="channels">
+    <div class="channels-row">
+      <img src="media/sep-emir-b.jpg" alt="The emir plate's blue exposure, tinted blue: the patterned robe is the brightest thing in the frame and the wall behind him is dark">
+      <img src="media/sep-emir-g.jpg" alt="The emir plate's green exposure, tinted green: the robe is mid-toned and the wall is lighter than it was in the blue exposure">
+      <img src="media/sep-emir-r.jpg" alt="The emir plate's red exposure, tinted red: the robe is now almost black while the wall and the doors are bright">
+    </div>
+  </figure>
+
+  <div class="prose column">
+
+    <p>To fix this, I scored gradient magnitude instead of brightness. The gradients are computed by subtracting each pixel from its neighbor, 
+      once down the columns and once across the rows,</p>
+  </div>
+
+  <div class="eq">\[ \nabla_y I(y,\,x) \;=\; I(y+1,\,x) - I(y,\,x), \qquad
+                     \nabla_x I(y,\,x) \;=\; I(y,\,x+1) - I(y,\,x) \]</div>
+
+  <div class="prose column">
+    <p>and the feature fed to the search is their magnitude:</p>
+  </div>
+
+  <div class="eq">\[ \lVert \nabla I \rVert \;=\; \sqrt{\left(\nabla_y I\right)^2 + \left(\nabla_x I\right)^2} \]</div>
+
+  <div class="prose column">
+    <p>This essentially captures the edges in the image, and avoids the issues with brightness altogether.
+      As we can see below, using NCC on gradient magnitude correctly aligns the channels.</p>
+  </div>
+
+  <div class="figpair">
+    <figure>
+      <img src="media/emir-raw.jpg" alt="The emir plate aligned on raw pixels, showing a ghosted double image">
+      <figcaption>NCC on raw pixels · R=(483, −461)</figcaption>
+    </figure>
+    <figure>
+      <img src="media/emir-grad.jpg" alt="The emir plate aligned on gradient magnitude, correctly registered">
+      <figcaption>NCC on gradient magnitude · R=(107, 40)</figcaption>
+    </figure>
+  </div>
+</section>
+
+
+<!-- ══════════════════════════ V · CATALOGUE ══════════════════════════ -->
+<section class="chapter" id="catalogue">
+  <div class="chapter-head">
+    <span class="chapter-num">V</span>
+    <div class="chapter-titles">
+      <h2>The recovered collection</h2>
+    </div>
+  </div>
+
+  <div class="prose column">
+    <p class="lead"> Below are all seventeen plates, aligned by multi-scale pyramid search with
+    normalized cross-correlation on gradient magnitude. The green (G) and red (R) channel displacements are given as
+    (dy, dx) in pixels at full scan resolution.</p>
+  </div>
+
+  <div class="plates">
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-cathedral.jpg" alt="cathedral, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 01</span><span class="plate-name">cathedral</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (5, 2) · R (12, 3)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-church.jpg" alt="church, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 02</span><span class="plate-name">church</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (25, 4) · R (58, −4)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-emir.jpg" alt="emir, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 03</span><span class="plate-name">emir</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (49, 24) · R (107, 40)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-harvesters.jpg" alt="harvesters, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 04</span><span class="plate-name">harvesters</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (60, 18) · R (124, 13)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-icon.jpg" alt="icon, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 05</span><span class="plate-name">icon</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (41, 17) · R (90, 23)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-ilemselga.jpg" alt="ilemselga, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 06</span><span class="plate-name">ilemselga</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (40, 7) · R (131, 11)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-melons.jpg" alt="melons, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 07</span><span class="plate-name">melons</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (80, 10) · R (177, 13)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-monastery.jpg" alt="monastery, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 08</span><span class="plate-name">monastery</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (−3, 2) · R (3, 2)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-religous_painting.jpg" alt="religious painting, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 09</span><span class="plate-name">religous_painting</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (30, 7) · R (70, 6)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-self_portrait.jpg" alt="self portrait, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 10</span><span class="plate-name">self_portrait</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (78, 29) · R (175, 37)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-siren.jpg" alt="siren, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 11</span><span class="plate-name">siren</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (49, −6) · R (96, −24)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-three_generations.jpg" alt="three generations, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 12</span><span class="plate-name">three_generations</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (54, 12) · R (111, 9)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-tobolsk.jpg" alt="tobolsk, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 13</span><span class="plate-name">tobolsk</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (3, 2) · R (6, 3)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-wharf.jpg" alt="wharf, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no">№ 14</span><span class="plate-name">wharf</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (15, −6) · R (83, −16)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-greenhouse.jpg" alt="greenhouse, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no" style="color:var(--ceramic)">№ 15 · own selection</span><span class="plate-name">greenhouse</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (59, 27) · R (126, 34)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-peonies.jpg" alt="peonies, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no" style="color:var(--ceramic)">№ 16 · own selection</span><span class="plate-name">peonies</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (52, 3) · R (104, −5)</span>
+      </figcaption>
+    </figure></div>
+
+    <div class="plate"><figure>
+      <div class="plate-frame"><img src="media/final-poppies.jpg" alt="poppies, aligned"></div>
+      <figcaption class="plate-label">
+        <span class="plate-no" style="color:var(--ceramic)">№ 17 · own selection</span><span class="plate-name">poppies</span>
+        <div class="plate-rule"></div>
+        <span class="plate-data">G (8, 8) · R (60, 14)</span>
+      </figcaption>
+    </figure></div>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+</main>
+
+<footer class="foot">
+  <div class="foot-inner">
+    <span>CS 180 · Project 1 · Jeffery Ren</span>
+    <span>
+      <a href="../">Index</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+/* Typeset the display equations. Scoped to .eq so nothing else on the page is
+   scanned, and only \[ … \] / \( … \) are treated as delimiters — a bare $
+   in the prose stays a dollar sign. */
+window.addEventListener('DOMContentLoaded', function () {
+  if (typeof renderMathInElement !== 'function') return;
+  document.querySelectorAll('.eq').forEach(function (el) {
+    renderMathInElement(el, {
+      delimiters: [
+        { left: '\\[', right: '\\]', display: true },
+        { left: '\\(', right: '\\)', display: false }
+      ],
+      throwOnError: false
+    });
+  });
+});
+</script>
+
+</body>
+</html>
